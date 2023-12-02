@@ -128,4 +128,13 @@ fn part2(input: &InputData) -> AocResult<u32> {
 aoc_main!(parse, part1, part2);
 
 #[test]
-fn test() {}
+fn test_part1() {
+    let input = "1abc2\npqr3stu8vwx\na1b2c3d4e5f\ntreb7uchet";
+    assert_part!(parse, part1, input, 142);
+}
+
+#[test]
+fn test_part2() {
+    let input = "two1nine\neightwothree\nabcone2threexyz\nxtwone3four\n4nineeightseven2\nzoneight234\n7pqrstsixteen";
+    assert_part!(parse, part2, input, 281);
+}
