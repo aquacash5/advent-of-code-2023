@@ -82,18 +82,16 @@ fn part1(input: &InputData) -> AocResult<u32> {
     const MAX_GREEN: u32 = 13;
     const MAX_BLUE: u32 = 14;
 
-    let mut total = 0_u32;
-
-    'games: for game in &input.games {
-        for Round { red, green, blue } in &game.rounds {
-            if *red > MAX_RED || *green > MAX_GREEN || *blue > MAX_BLUE {
-                continue 'games;
-            }
-        }
-        total += game.id;
-    }
-
-    Ok(total)
+    Ok(input
+        .games
+        .iter()
+        .filter(|game| {
+            game.rounds.iter().all(|Round { red, green, blue }| {
+                *red <= MAX_RED && *green <= MAX_GREEN && *blue <= MAX_BLUE
+            })
+        })
+        .map(|Game { id, .. }| *id)
+        .sum())
 }
 
 #[allow(clippy::unnecessary_wraps)]
