@@ -7,11 +7,11 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.66"
-cargo_metadata = "0.15.2"
+cargo_metadata = "0.18.1"
 clap = { version = "4.0.18", features = ["derive"] }
-dirs = "4.0.0"
+dirs = "5.0.1"
 env_logger = "0.10.0"
-indoc = "1.0.7"
+indoc = "2.0.4"
 log = { version = "0.4.17", features = ["std"] }
 reqwest = { version = "0.11.12", features = ["blocking"] }
 xshell = "0.2.2"
