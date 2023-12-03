@@ -1,6 +1,6 @@
 use anyhow::Context;
 use cargo_metadata::Metadata;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use log::debug;
 use reqwest::blocking as req;
 use std::{
@@ -11,7 +11,51 @@ use std::{
 
 const AOC_YEAR: &str = "2023";
 
-const MAIN_SCAFFOLDING: &str = indoc! { r#"
+/// Only create file if path doesn't exist
+fn create_new<P: AsRef<Path>>(path: P) -> io::Result<File> {
+    OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create_new(true)
+        .open(path.as_ref())
+}
+
+/// Generates the files for the new day
+///
+/// Scaffolds the project files for the new day of Advent of Code.
+/// Then, we try to download the input file using the session key
+/// in the `~/.adventofcode` file.
+pub fn generate_day(day: u64, metadata: &Metadata) -> anyhow::Result<()> {
+    let day_folder = format!("day-{day:0>2}");
+    let location = metadata.workspace_root.as_std_path().join(day_folder);
+    debug!("New folder location: {}", location.display());
+    fs::create_dir_all(location.join("src"))?;
+    if let Ok(mut file) = create_new(location.join("Cargo.toml")) {
+        println!("Creating Cargo.toml");
+        file.write_all(
+            formatdoc! { r#"
+[package]
+name = "day-{day:0>2}"
+version = "1.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+itertools = "0.12.0"
+nom = "7.1.1"
+utils = {{ path = "../utils", version = "*" }}
+
+"# }
+            .as_bytes(),
+        )?;
+    } else {
+        println!("Cargo.toml exists");
+    }
+    if let Ok(mut file) = create_new(location.join("src").join("main.rs")) {
+        println!("Creating main.rs");
+        file.write_all(
+            indoc! { r#"
 use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
 use utils::*;
@@ -38,55 +82,9 @@ aoc_main!(parse, part1, part2);
 #[test]
 fn test() {}
 
-"# };
-
-const CARGO_TOML_SCAFFOLDING: &str = indoc! { r#"
-[package]
-name = "day-{DAY-NUMBER}"
-version = "1.0.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-itertools = "0.12.0"
-nom = "7.1.1"
-utils = { path = "../utils", version = "*" }
-
-"# };
-
-/// Only create file if path doesn't exist
-fn create_new<P: AsRef<Path>>(path: P) -> io::Result<File> {
-    OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create_new(true)
-        .open(path.as_ref())
-}
-
-/// Generates the files for the new day
-///
-/// Scaffolds the project files for the new day of Advent of Code.
-/// Then, we try to download the input file using the session key
-/// in the `~/.adventofcode` file.
-pub fn generate_day(day: u64, metadata: &Metadata) -> anyhow::Result<()> {
-    let day_folder = format!("day-{day}");
-    let location = metadata.workspace_root.as_std_path().join(day_folder);
-    debug!("New folder location: {}", location.display());
-    fs::create_dir_all(location.join("src"))?;
-    if let Ok(mut file) = create_new(location.join("Cargo.toml")) {
-        println!("Creating Cargo.toml");
-        file.write_all(
-            CARGO_TOML_SCAFFOLDING
-                .replace("{DAY-NUMBER}", &day.to_string())
-                .as_bytes(),
+"# }
+            .as_bytes(),
         )?;
-    } else {
-        println!("Cargo.toml exists");
-    }
-    if let Ok(mut file) = create_new(location.join("src").join("main.rs")) {
-        println!("Creating main.rs");
-        file.write_all(MAIN_SCAFFOLDING.as_bytes())?;
     } else {
         println!("main.rs exists");
     }

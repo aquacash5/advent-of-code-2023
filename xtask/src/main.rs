@@ -114,7 +114,7 @@ fn main() -> anyhow::Result<()> {
             generate_day(day, &metadata)?;
         }
         Cli::Day { day, part } => {
-            let package = format!("day-{day}");
+            let package = format!("day-{day:0>2}");
             let path = metadata
                 .workspace_root
                 .as_std_path()
@@ -134,7 +134,7 @@ fn main() -> anyhow::Result<()> {
             cmd!(sh, "cargo run -q --release --package tree").run()?;
         }
         Cli::Test { day } => {
-            let day = format!("day-{day}");
+            let day = format!("day-{day:0>2}");
             cmd!(sh, "cargo test -q --package {day}").run()?;
         }
         Cli::TestAll => {
