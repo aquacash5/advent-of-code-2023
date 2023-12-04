@@ -55,7 +55,7 @@ utils = {{ path = "../utils", version = "*" }}
     if let Ok(mut file) = create_new(location.join("src").join("main.rs")) {
         println!("Creating main.rs");
         file.write_all(
-            indoc! { r#"
+            indoc! { r"
 use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
 use utils::*;
@@ -82,7 +82,7 @@ aoc_main!(parse, part1, part2);
 #[test]
 fn test() {}
 
-"# }
+" }
             .as_bytes(),
         )?;
     } else {

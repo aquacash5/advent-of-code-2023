@@ -27,8 +27,8 @@ impl<'a> PartNumberIterator<'a> {
     }
 }
 
-fn ascii_to_u64(c: &u8) -> u64 {
-    (*c as char).to_digit(10).unwrap().into()
+fn ascii_to_u64(c: u8) -> u64 {
+    (c as char).to_digit(10).unwrap().into()
 }
 
 impl<'a> Iterator for PartNumberIterator<'a> {
@@ -47,7 +47,7 @@ impl<'a> Iterator for PartNumberIterator<'a> {
                             column_start,
                             column_end: col_0,
                         };
-                        self.part_number = Some((pos_1, (total * 10) + ascii_to_u64(item)));
+                        self.part_number = Some((pos_1, (total * 10) + ascii_to_u64(*item)));
                     }
                     (false, true) => {
                         let pos_1 = Position {
@@ -55,10 +55,10 @@ impl<'a> Iterator for PartNumberIterator<'a> {
                             column_start: col_0,
                             column_end: col_0,
                         };
-                        self.part_number = Some((pos_1, ascii_to_u64(item)));
+                        self.part_number = Some((pos_1, ascii_to_u64(*item)));
                         return Some((pos, total));
                     }
-                    (true, false) | (false, false) => {
+                    (true | false, false) => {
                         self.part_number = None;
                         return Some((pos, total));
                     }
@@ -69,7 +69,7 @@ impl<'a> Iterator for PartNumberIterator<'a> {
                     column_start: col_0,
                     column_end: col_0,
                 };
-                self.part_number = Some((pos_1, ascii_to_u64(item)))
+                self.part_number = Some((pos_1, ascii_to_u64(*item)));
             }
         }
         let temp = self.part_number;
@@ -81,6 +81,7 @@ impl<'a> Iterator for PartNumberIterator<'a> {
 #[derive(Debug, PartialEq, Clone)]
 struct InputData(Array2<u8>);
 
+#[allow(clippy::unnecessary_wraps)]
 fn parse(input: &str) -> ParseResult<InputData> {
     let data: Vec<Vec<u8>> = input
         .split('\n')
@@ -149,7 +150,7 @@ fn part2(input: &InputData) -> AocResult<u64> {
                                 r == *row && (column_start..=column_end).contains(&&c)
                             },
                         )
-                        .cloned()
+                        .copied()
                 })
                 .unique()
                 .collect();

@@ -8,7 +8,7 @@ struct ShrinkStartStr<'a> {
 }
 
 impl<'a> ShrinkStartStr<'a> {
-    fn new(s: &'a str) -> ShrinkStartStr<'a> {
+    const fn new(s: &'a str) -> ShrinkStartStr<'a> {
         ShrinkStartStr { s, i: 0 }
     }
 }
@@ -29,7 +29,7 @@ struct ExpandEndStr<'a> {
 }
 
 impl<'a> ExpandEndStr<'a> {
-    fn new(s: &'a str) -> ExpandEndStr<'a> {
+    const fn new(s: &'a str) -> ExpandEndStr<'a> {
         ExpandEndStr { s, i: s.len() }
     }
 }
@@ -49,6 +49,7 @@ struct InputData {
     lines: Vec<String>,
 }
 
+#[allow(clippy::unnecessary_wraps)]
 fn parse(input: &str) -> ParseResult<InputData> {
     IResult::Ok((
         "",
@@ -63,6 +64,7 @@ fn parse(input: &str) -> ParseResult<InputData> {
 }
 
 fn get_number(s: &str) -> Option<u32> {
+    #[allow(clippy::option_if_let_else)]
     if let Some(i) = s.chars().next().and_then(|c| c.to_digit(10)) {
         Some(i)
     } else if s.starts_with("one") {
@@ -91,17 +93,15 @@ fn get_number(s: &str) -> Option<u32> {
 #[allow(clippy::unnecessary_wraps)]
 fn part1(input: &InputData) -> AocResult<u32> {
     let mut total = 0_u32;
-    for line in input.lines.iter() {
+    for line in &input.lines {
         let first = line
             .chars()
-            .filter_map(|c| c.to_digit(10))
-            .next()
+            .find_map(|c| c.to_digit(10))
             .expect("No digits in string");
         let last = line
             .chars()
             .rev()
-            .filter_map(|c| c.to_digit(10))
-            .next()
+            .find_map(|c| c.to_digit(10))
             .expect("No digits in string");
         total += (first * 10) + last;
     }
@@ -111,14 +111,12 @@ fn part1(input: &InputData) -> AocResult<u32> {
 #[allow(clippy::unnecessary_wraps)]
 fn part2(input: &InputData) -> AocResult<u32> {
     let mut total = 0_u32;
-    for line in input.lines.iter() {
+    for line in &input.lines {
         let first = ShrinkStartStr::new(line)
-            .filter_map(get_number)
-            .next()
+            .find_map(get_number)
             .expect("No number in string");
         let last = ExpandEndStr::new(line)
-            .filter_map(get_number)
-            .next()
+            .find_map(get_number)
             .expect("No number in string");
         total += (first * 10) + last;
     }

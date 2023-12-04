@@ -9,14 +9,14 @@ struct Round {
 }
 
 impl Round {
-    fn new(red: u32, green: u32, blue: u32) -> Self {
-        Round { red, green, blue }
+    const fn new(red: u32, green: u32, blue: u32) -> Self {
+        Self { red, green, blue }
     }
 }
 
 impl From<Vec<Kind>> for Round {
     fn from(value: Vec<Kind>) -> Self {
-        let mut round = Round::new(0, 0, 0);
+        let mut round = Self::new(0, 0, 0);
         for kind in value {
             match kind {
                 Kind::Red(i) => round.red += i,
