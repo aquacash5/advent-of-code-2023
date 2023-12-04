@@ -67,9 +67,9 @@ fn part1(input: &InputData) -> AocResult<u64> {
 }
 
 #[allow(clippy::unnecessary_wraps)]
-fn part2(input: &InputData) -> AocResult<u64> {
-    let mut values: Vec<(u64, Card)> = input.cards.iter().cloned().map(|card| (1, card)).collect();
-    let mut total: u64 = 0;
+fn part2(input: &InputData) -> AocResult<usize> {
+    let mut values: Vec<(usize, Card)> = input.cards.iter().cloned().enumerate().collect();
+    let mut total: usize = 0;
 
     for i in 0..values.len() - 1 {
         let (card_count, card) = values[i].clone();
