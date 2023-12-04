@@ -6,8 +6,8 @@ use utils::*;
 #[derive(Debug, PartialEq, Clone)]
 struct Card {
     id: u8,
-    numbers: Vec<u8>,
-    winning_numbers: Vec<u8>,
+    numbers: BTreeSet<u8>,
+    winning_numbers: BTreeSet<u8>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -18,15 +18,15 @@ struct InputData {
 fn parse(input: &str) -> ParseResult<InputData> {
     use nom::{
         bytes::complete::tag,
-        character::complete::{line_ending, u8},
+        character::complete::{line_ending, space1, u8},
         combinator::map,
         multi::{many1, separated_list1},
         sequence::{delimited, pair, preceded, separated_pair},
     };
 
     let card_id = delimited(pair(tag("Card"), many1(tag(" "))), u8, tag(":"));
-    let winning_numbers = many1(preceded(many1(tag(" ")), u8));
-    let card_numbers = many1(preceded(many1(tag(" ")), u8));
+    let winning_numbers = many1(preceded(space1, u8));
+    let card_numbers = many1(preceded(space1, u8));
     let numbers = separated_pair(winning_numbers, tag(" |"), card_numbers);
     let card = pair(card_id, numbers);
     let cards = separated_list1(line_ending, card);
@@ -35,8 +35,8 @@ fn parse(input: &str) -> ParseResult<InputData> {
             .into_iter()
             .map(|(id, (winning_numbers, card_numbers))| Card {
                 id,
-                winning_numbers,
-                numbers: card_numbers,
+                winning_numbers: winning_numbers.into_iter().collect(),
+                numbers: card_numbers.into_iter().collect(),
             })
             .collect(),
     });
@@ -51,12 +51,10 @@ fn part1(input: &InputData) -> AocResult<u64> {
         .map(
             |Card {
                  winning_numbers,
-                 numbers: card_numbers,
+                 numbers,
                  ..
              }| {
-                let winning: BTreeSet<u8> = winning_numbers.iter().copied().collect();
-                let numbers: BTreeSet<u8> = card_numbers.iter().copied().collect();
-                let total = winning.intersection(&numbers).count();
+                let total = winning_numbers.intersection(numbers).count();
                 if total > 0 {
                     let u32_total = u32::try_from(total).expect("Count fits in u32");
                     2_u64.pow(u32_total - 1)
@@ -78,13 +76,11 @@ fn part2(input: &InputData) -> AocResult<u64> {
             card_count,
             Card {
                 winning_numbers,
-                numbers: card_numbers,
+                numbers,
                 ..
             },
         ) = values[i].clone();
-        let winning: BTreeSet<u8> = winning_numbers.iter().copied().collect();
-        let numbers: BTreeSet<u8> = card_numbers.iter().copied().collect();
-        let win_count = winning.intersection(&numbers).count();
+        let win_count = winning_numbers.intersection(&numbers).count();
         for j in 1..=win_count {
             values[i + j].0 += card_count;
         }
@@ -113,33 +109,33 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
             cards: vec![
                 Card {
                     id: 1,
-                    winning_numbers: vec![41, 48, 83, 86, 17],
-                    numbers: vec![83, 86, 6, 31, 17, 9, 48, 53]
+                    winning_numbers: [41, 48, 83, 86, 17].into(),
+                    numbers: [83, 86, 6, 31, 17, 9, 48, 53].into()
                 },
                 Card {
                     id: 2,
-                    winning_numbers: vec![13, 32, 20, 16, 61],
-                    numbers: vec![61, 30, 68, 82, 17, 32, 24, 19]
+                    winning_numbers: [13, 32, 20, 16, 61].into(),
+                    numbers: [61, 30, 68, 82, 17, 32, 24, 19].into()
                 },
                 Card {
                     id: 3,
-                    winning_numbers: vec![1, 21, 53, 59, 44],
-                    numbers: vec![69, 82, 63, 72, 16, 21, 14, 1]
+                    winning_numbers: [1, 21, 53, 59, 44].into(),
+                    numbers: [69, 82, 63, 72, 16, 21, 14, 1].into()
                 },
                 Card {
                     id: 4,
-                    winning_numbers: vec![41, 92, 73, 84, 69],
-                    numbers: vec![59, 84, 76, 51, 58, 5, 54, 83]
+                    winning_numbers: [41, 92, 73, 84, 69].into(),
+                    numbers: [59, 84, 76, 51, 58, 5, 54, 83].into()
                 },
                 Card {
                     id: 5,
-                    winning_numbers: vec![87, 83, 26, 28, 32],
-                    numbers: vec![88, 30, 70, 12, 93, 22, 82, 36]
+                    winning_numbers: [87, 83, 26, 28, 32].into(),
+                    numbers: [88, 30, 70, 12, 93, 22, 82, 36].into()
                 },
                 Card {
                     id: 6,
-                    winning_numbers: vec![31, 18, 13, 56, 72],
-                    numbers: vec![74, 77, 10, 23, 35, 67, 36, 11]
+                    winning_numbers: [31, 18, 13, 56, 72].into(),
+                    numbers: [74, 77, 10, 23, 35, 67, 36, 11].into()
                 }
             ]
         }
