@@ -10,6 +10,15 @@ struct Card {
     winning_numbers: BTreeSet<u8>,
 }
 
+impl Card {
+    pub fn matching_numbers(&self) -> Vec<u8> {
+        self.winning_numbers
+            .intersection(&self.numbers)
+            .copied()
+            .collect()
+    }
+}
+
 #[derive(Debug, PartialEq)]
 struct InputData {
     cards: Vec<Card>,
@@ -48,21 +57,10 @@ fn part1(input: &InputData) -> AocResult<u64> {
     Ok(input
         .cards
         .iter()
-        .map(
-            |Card {
-                 winning_numbers,
-                 numbers,
-                 ..
-             }| {
-                let total = winning_numbers.intersection(numbers).count();
-                if total > 0 {
-                    let u32_total = u32::try_from(total).expect("Count fits in u32");
-                    2_u64.pow(u32_total - 1)
-                } else {
-                    0
-                }
-            },
-        )
+        .map(|card| card.matching_numbers().len())
+        .filter(|i| *i > 0)
+        .map(|i| u32::try_from(i).expect("Count fits in u32"))
+        .map(|i| 2_u64.pow(i - 1))
         .sum())
 }
 
@@ -72,15 +70,8 @@ fn part2(input: &InputData) -> AocResult<u64> {
     let mut total: u64 = 0;
 
     for i in 0..values.len() - 1 {
-        let (
-            card_count,
-            Card {
-                winning_numbers,
-                numbers,
-                ..
-            },
-        ) = values[i].clone();
-        let win_count = winning_numbers.intersection(&numbers).count();
+        let (card_count, card) = values[i].clone();
+        let win_count = card.matching_numbers().len();
         for j in 1..=win_count {
             values[i + j].0 += card_count;
         }
