@@ -58,9 +58,11 @@ fn part1(input: &InputData) -> AocResult<u64> {
         .cards
         .iter()
         .map(|card| card.matching_numbers().len())
-        .filter(|i| *i > 0)
         .map(|i| u32::try_from(i).expect("Count fits in u32"))
-        .map(|i| 2_u64.pow(i - 1))
+        .map(|i| match i.checked_sub(1) {
+            Some(j) => 2_u64.pow(j),
+            None => 0,
+        })
         .sum())
 }
 
