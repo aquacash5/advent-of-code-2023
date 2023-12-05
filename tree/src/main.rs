@@ -1,9 +1,11 @@
 use console::style;
 
-const TREE: &str = r"
+const STAR: &str = r"
         |
        \|/
-      --*--
+      --*--";
+
+const TREE: &str = r"
        >o<
       >O<<<
      >>o>>*<
@@ -12,24 +14,26 @@ const TREE: &str = r"
   >o>>@>>>o>o<<
  >*>>*<o<@<o<<<<
 >o>o<<<O<*>>*>>O<
-   _ __| |__ _
 ";
+
+const BASE: &str = r"   _ __| |__ _";
+
 const ORANGE: u8 = 166;
 
 fn main() {
-    println!(
-        "{}",
-        TREE.replace('|', &style("|").bold().white().to_string())
-            .replace('_', &style("_").bold().white().to_string())
-            .replace('*', &style("*").bold().yellow().to_string())
-            .replacen('|', &style("|").bold().yellow().to_string(), 2)
-            .replace('\\', &style("\\").bold().yellow().to_string())
-            .replace('/', &style("/").bold().yellow().to_string())
-            .replace('-', &style("-").bold().yellow().to_string())
-            .replace('>', &style(">").bold().green().to_string())
-            .replace('<', &style("<").bold().green().to_string())
-            .replace('O', &style("O").bold().blue().to_string())
-            .replace('@', &style("@").bold().red().to_string())
-            .replace('o', &style("o").bold().color256(ORANGE).to_string())
-    );
+    let star: String = style(STAR).bold().yellow().to_string();
+    let tree: String = TREE
+        .chars()
+        .map(|c| match c {
+            '<' => style("<").bold().green().to_string(),
+            '>' => style(">").bold().green().to_string(),
+            'o' => style("o").bold().color256(ORANGE).to_string(),
+            'O' => style("O").bold().blue().to_string(),
+            '@' => style("@").bold().red().to_string(),
+            '*' => style("*").bold().yellow().to_string(),
+            ch => style(ch).bold().white().to_string(),
+        })
+        .collect();
+    let base: String = style(BASE).bold().white().to_string();
+    println!("{star}{tree}{base}");
 }
