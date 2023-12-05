@@ -60,19 +60,12 @@ fn parse(input: &str) -> ParseResult<InputData> {
     let red = map(terminated(u32, tag(" red")), Kind::Red);
     let green = map(terminated(u32, tag(" green")), Kind::Green);
     let blue = map(terminated(u32, tag(" blue")), Kind::Blue);
-    let round = separated_list0(tag(", "), alt((red, green, blue)));
+    let color = alt((red, green, blue));
+    let round = map(separated_list0(tag(", "), color), Round::from);
     let rounds = separated_list0(tag("; "), round);
-    let game = pair(game_id, rounds);
+    let game = map(pair(game_id, rounds), |(id, rounds)| Game { id, rounds });
     let games = separated_list0(line_ending, game);
-    let mut parser = map(games, |v| InputData {
-        games: v
-            .into_iter()
-            .map(|(id, r)| Game {
-                id,
-                rounds: r.into_iter().map(Round::from).collect(),
-            })
-            .collect(),
-    });
+    let mut parser = map(games, |games| InputData { games });
     parser(input)
 }
 
