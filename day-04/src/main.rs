@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{btree_set::Intersection, BTreeSet};
 
 #[allow(clippy::wildcard_imports)]
 use utils::*;
@@ -7,15 +7,12 @@ use utils::*;
 struct Card {
     id: u8,
     numbers: BTreeSet<u8>,
-    winning_numbers: BTreeSet<u8>,
+    winning: BTreeSet<u8>,
 }
 
-impl Card {
-    pub fn matching_numbers(&self) -> Vec<u8> {
-        self.winning_numbers
-            .intersection(&self.numbers)
-            .copied()
-            .collect()
+impl<'a> Card {
+    pub fn matching_numbers(&'a self) -> Intersection<'a, u8> {
+        self.winning.intersection(&self.numbers)
     }
 }
 
@@ -29,26 +26,21 @@ fn parse(input: &str) -> ParseResult<InputData> {
         bytes::complete::tag,
         character::complete::{line_ending, space1, u8},
         combinator::map,
-        multi::{many1, separated_list1},
-        sequence::{delimited, pair, preceded, separated_pair},
+        multi::separated_list1,
+        sequence::{delimited, pair, separated_pair},
     };
 
-    let card_id = delimited(pair(tag("Card"), many1(tag(" "))), u8, tag(":"));
-    let winning_numbers = many1(preceded(space1, u8));
-    let card_numbers = many1(preceded(space1, u8));
-    let numbers = separated_pair(winning_numbers, tag(" |"), card_numbers);
-    let card = pair(card_id, numbers);
-    let cards = separated_list1(line_ending, card);
-    let mut parser = map(cards, |cards| InputData {
-        cards: cards
-            .into_iter()
-            .map(|(id, (winning_numbers, card_numbers))| Card {
-                id,
-                winning_numbers: winning_numbers.into_iter().collect(),
-                numbers: card_numbers.into_iter().collect(),
-            })
-            .collect(),
+    let card_id = delimited(pair(tag("Card"), space1), u8, pair(tag(":"), space1));
+    let winning_numbers = map(separated_list1(space1, u8), |v| v.into_iter().collect());
+    let card_numbers = map(separated_list1(space1, u8), |v| v.into_iter().collect());
+    let numbers = separated_pair(winning_numbers, tag(" | "), card_numbers);
+    let card = map(pair(card_id, numbers), |(id, (winning, numbers))| Card {
+        id,
+        winning,
+        numbers,
     });
+    let cards = separated_list1(line_ending, card);
+    let mut parser = map(cards, |cards| InputData { cards });
     parser(input)
 }
 
@@ -57,7 +49,7 @@ fn part1(input: &InputData) -> AocResult<u64> {
     Ok(input
         .cards
         .iter()
-        .map(|card| card.matching_numbers().len())
+        .map(|card| card.matching_numbers().count())
         .map(|i| u32::try_from(i).expect("Count fits in u32"))
         .map(|i| match i.checked_sub(1) {
             Some(j) => 2_u64.pow(j),
@@ -68,18 +60,17 @@ fn part1(input: &InputData) -> AocResult<u64> {
 
 #[allow(clippy::unnecessary_wraps)]
 fn part2(input: &InputData) -> AocResult<usize> {
-    let mut values: Vec<(usize, Card)> = input.cards.iter().cloned().enumerate().collect();
+    let mut values: Vec<(usize, Card)> = input.cards.iter().cloned().map(|c| (1, c)).collect();
     let mut total: usize = 0;
 
-    for i in 0..values.len() - 1 {
+    for i in 0..values.len() {
         let (card_count, card) = values[i].clone();
-        let win_count = card.matching_numbers().len();
+        let win_count = card.matching_numbers().count();
         for j in 1..=win_count {
             values[i + j].0 += card_count;
         }
         total += card_count;
     }
-    total += values.last().unwrap().0;
 
     Ok(total)
 }
@@ -102,32 +93,32 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
             cards: vec![
                 Card {
                     id: 1,
-                    winning_numbers: [41, 48, 83, 86, 17].into(),
+                    winning: [41, 48, 83, 86, 17].into(),
                     numbers: [83, 86, 6, 31, 17, 9, 48, 53].into()
                 },
                 Card {
                     id: 2,
-                    winning_numbers: [13, 32, 20, 16, 61].into(),
+                    winning: [13, 32, 20, 16, 61].into(),
                     numbers: [61, 30, 68, 82, 17, 32, 24, 19].into()
                 },
                 Card {
                     id: 3,
-                    winning_numbers: [1, 21, 53, 59, 44].into(),
+                    winning: [1, 21, 53, 59, 44].into(),
                     numbers: [69, 82, 63, 72, 16, 21, 14, 1].into()
                 },
                 Card {
                     id: 4,
-                    winning_numbers: [41, 92, 73, 84, 69].into(),
+                    winning: [41, 92, 73, 84, 69].into(),
                     numbers: [59, 84, 76, 51, 58, 5, 54, 83].into()
                 },
                 Card {
                     id: 5,
-                    winning_numbers: [87, 83, 26, 28, 32].into(),
+                    winning: [87, 83, 26, 28, 32].into(),
                     numbers: [88, 30, 70, 12, 93, 22, 82, 36].into()
                 },
                 Card {
                     id: 6,
-                    winning_numbers: [31, 18, 13, 56, 72].into(),
+                    winning: [31, 18, 13, 56, 72].into(),
                     numbers: [74, 77, 10, 23, 35, 67, 36, 11].into()
                 }
             ]
