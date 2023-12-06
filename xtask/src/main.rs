@@ -124,6 +124,7 @@ fn main() -> anyhow::Result<()> {
                 generate_input(day, &path)?;
             }
             let part = format!("{part}");
+            sh.set_var("RUSTFLAGS", "-Awarnings");
             cmd!(
                 sh,
                 "cargo run -q --release --package {package} -- {path} -p {part}"
