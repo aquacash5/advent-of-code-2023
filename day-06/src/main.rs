@@ -16,7 +16,7 @@ impl RaceStat {
         });
         let start = margin_iter.next().unwrap_or(0).saturating_sub(1);
         let end = margin_iter.next_back().unwrap_or(0);
-        (end - start) as usize
+        usize::try_from(end - start).unwrap_or(0)
     }
 }
 
@@ -50,13 +50,13 @@ fn parse(input: &str) -> ParseResult<InputData> {
 
 #[allow(clippy::unnecessary_wraps)]
 fn part1(InputData(races): &InputData) -> AocResult<usize> {
-    Ok(races.iter().map(|race| race.margins()).product())
+    Ok(races.iter().map(RaceStat::margins).product())
 }
 
 #[allow(clippy::unnecessary_wraps)]
 fn part2(InputData(races): &InputData) -> AocResult<usize> {
-    let mut time: String = "".to_string();
-    let mut record: String = "".to_string();
+    let mut time: String = String::new();
+    let mut record: String = String::new();
     for r in races {
         time += &r.time.to_string();
         record += &r.record.to_string();
@@ -70,25 +70,39 @@ fn part2(InputData(races): &InputData) -> AocResult<usize> {
 
 aoc_main!(parse, part1, part2);
 
-#[test]
-fn test() {
-    let input = "Time:      7  15   30
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const INPUT: &str = "Time:      7  15   30
 Distance:  9  40  200";
-    assert_parser!(
-        parse,
-        input,
-        InputData(vec![
-            RaceStat { time: 7, record: 9 },
-            RaceStat {
-                time: 15,
-                record: 40,
-            },
-            RaceStat {
-                time: 30,
-                record: 200,
-            }
-        ])
-    );
-    assert_part!(parse, part1, input, 288);
-    assert_part!(parse, part2, input, 71503);
+
+    #[test]
+    fn test_parser() {
+        assert_parser!(
+            parse,
+            INPUT,
+            InputData(vec![
+                RaceStat { time: 7, record: 9 },
+                RaceStat {
+                    time: 15,
+                    record: 40
+                },
+                RaceStat {
+                    time: 30,
+                    record: 200
+                }
+            ])
+        );
+    }
+
+    #[test]
+    fn test_part1() {
+        assert_part!(parse, part1, INPUT, 288);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_part!(parse, part2, INPUT, 71503);
+    }
 }

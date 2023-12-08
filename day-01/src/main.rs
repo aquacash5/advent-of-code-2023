@@ -2,18 +2,18 @@ use nom::IResult;
 #[allow(clippy::wildcard_imports)]
 use utils::*;
 
-struct ShrinkStartStr<'a> {
+struct ShrinkStart<'a> {
     s: &'a str,
     i: usize,
 }
 
-impl<'a> ShrinkStartStr<'a> {
-    const fn new(s: &'a str) -> ShrinkStartStr<'a> {
-        ShrinkStartStr { s, i: 0 }
+impl<'a> ShrinkStart<'a> {
+    const fn new(s: &'a str) -> ShrinkStart<'a> {
+        ShrinkStart { s, i: 0 }
     }
 }
 
-impl<'a> Iterator for ShrinkStartStr<'a> {
+impl<'a> Iterator for ShrinkStart<'a> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -23,18 +23,18 @@ impl<'a> Iterator for ShrinkStartStr<'a> {
     }
 }
 
-struct ExpandEndStr<'a> {
+struct ExpandEnd<'a> {
     s: &'a str,
     i: usize,
 }
 
-impl<'a> ExpandEndStr<'a> {
-    const fn new(s: &'a str) -> ExpandEndStr<'a> {
-        ExpandEndStr { s, i: s.len() }
+impl<'a> ExpandEnd<'a> {
+    const fn new(s: &'a str) -> ExpandEnd<'a> {
+        ExpandEnd { s, i: s.len() }
     }
 }
 
-impl<'a> Iterator for ExpandEndStr<'a> {
+impl<'a> Iterator for ExpandEnd<'a> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -112,10 +112,10 @@ fn part1(input: &InputData) -> AocResult<u32> {
 fn part2(input: &InputData) -> AocResult<u32> {
     let mut total = 0_u32;
     for line in &input.lines {
-        let first = ShrinkStartStr::new(line)
+        let first = ShrinkStart::new(line)
             .find_map(get_number)
             .expect("No number in string");
-        let last = ExpandEndStr::new(line)
+        let last = ExpandEnd::new(line)
             .find_map(get_number)
             .expect("No number in string");
         total += (first * 10) + last;
@@ -125,14 +125,36 @@ fn part2(input: &InputData) -> AocResult<u32> {
 
 aoc_main!(parse, part1, part2);
 
-#[test]
-fn test_part1() {
-    let input = "1abc2\npqr3stu8vwx\na1b2c3d4e5f\ntreb7uchet";
-    assert_part!(parse, part1, input, 142);
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn test_part2() {
-    let input = "two1nine\neightwothree\nabcone2threexyz\nxtwone3four\n4nineeightseven2\nzoneight234\n7pqrstsixteen";
-    assert_part!(parse, part2, input, 281);
+    #[test]
+    fn test_parser() {
+        let input = "1abc2\npqr3stu8vwx\na1b2c3d4e5f\ntreb7uchet";
+        assert_parser!(
+            parse,
+            input,
+            InputData {
+                lines: vec![
+                    String::from("1abc2"),
+                    String::from("pqr3stu8vwx"),
+                    String::from("a1b2c3d4e5f"),
+                    String::from("treb7uchet")
+                ]
+            }
+        );
+    }
+
+    #[test]
+    fn test_part1() {
+        let input = "1abc2\npqr3stu8vwx\na1b2c3d4e5f\ntreb7uchet";
+        assert_part!(parse, part1, input, 142);
+    }
+
+    #[test]
+    fn test_part2() {
+        let input = "two1nine\neightwothree\nabcone2threexyz\nxtwone3four\n4nineeightseven2\nzoneight234\n7pqrstsixteen";
+        assert_part!(parse, part2, input, 281);
+    }
 }

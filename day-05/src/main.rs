@@ -1,23 +1,7 @@
 use rayon::prelude::*;
-use std::ops::RangeInclusive;
 
 #[allow(clippy::wildcard_imports)]
 use utils::*;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Affected {
-    affected: RangeInclusive<u64>,
-    unaffected: Vec<RangeInclusive<u64>>,
-}
-
-impl Affected {
-    pub fn new(affected: RangeInclusive<u64>) -> Self {
-        Affected {
-            affected,
-            unaffected: vec![],
-        }
-    }
-}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 struct Mapper {
@@ -28,7 +12,7 @@ struct Mapper {
 
 impl Mapper {
     #[inline]
-    pub fn map_to_destination(&self, i: u64) -> u64 {
+    pub const fn map_to_destination(&self, i: u64) -> u64 {
         if self.in_range(i) {
             let dist = i - self.source;
             self.destination + dist
@@ -38,55 +22,8 @@ impl Mapper {
     }
 
     #[inline]
-    pub fn in_range(&self, i: u64) -> bool {
+    pub const fn in_range(&self, i: u64) -> bool {
         self.source <= i && i < self.source + self.length
-    }
-
-    pub fn map_range(&self, range: RangeInclusive<u64>) -> Affected {
-        match (
-            self.source <= *range.start(),
-            self.source + self.length <= *range.end(),
-        ) {
-            (true, true) => {
-                let start = self.map_to_destination(*range.start());
-                let end = self.map_to_destination(*range.end());
-                Affected::new(start..=end)
-            }
-            (true, false) => {
-                let start = self.map_to_destination(*range.start());
-                let end = self.destination + self.length;
-                let mut affected = Affected::new(start..=end);
-
-                let start = self.source + self.length + 1;
-                let end = *range.end();
-                affected.unaffected.push(start..=end);
-                affected
-            }
-            (false, true) => {
-                let start = self.destination;
-                let end = self.map_to_destination(*range.end());
-                let mut affected = Affected::new(start..=end);
-
-                let start = *range.start();
-                let end = self.source + self.length;
-                affected.unaffected.push(start..=end);
-                affected
-            }
-            (false, false) => {
-                let start = self.destination;
-                let end = self.destination + self.length;
-                let mut affected = Affected::new(start..=end);
-
-                let start = *range.start();
-                let end = self.source + self.length;
-                affected.unaffected.push(start..=end);
-
-                let start = self.source + self.length + 1;
-                let end = *range.end();
-                affected.unaffected.push(start..=end);
-                affected
-            }
-        }
     }
 }
 
@@ -99,11 +36,8 @@ impl Lookup {
         self.0
             .iter()
             .find(|mapper| mapper.in_range(i))
-            .map(|mapper| mapper.map_to_destination(i))
-            .unwrap_or(i)
+            .map_or(i, |mapper| mapper.map_to_destination(i))
     }
-
-    // pub fn map_ranges(&self, range: Vec<RangeInclusive<u64>>) -> Vec<RangeInclusive<u64>> {}
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -147,9 +81,9 @@ fn parse(input: &str) -> ParseResult<InputData> {
     let mapper = map(
         tuple((u64, space1, u64, space1, u64)),
         |(destination, _, source, _, length)| Mapper {
-            destination,
-            source,
             length,
+            source,
+            destination,
         },
     );
     let mappers = separated_list1(line_ending, mapper);
@@ -206,9 +140,11 @@ fn part2(InputData { seeds, table }: &InputData) -> AocResult<u64> {
 
 aoc_main!(parse, part1, part2);
 
-#[test]
-fn test() {
-    let input = "seeds: 79 14 55 13
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const INPUT: &str = "seeds: 79 14 55 13
 
 seed-to-soil map:
 50 98 2
@@ -241,119 +177,131 @@ temperature-to-humidity map:
 humidity-to-location map:
 60 56 37
 56 93 4";
-    assert_parser!(
-        parse,
-        input,
-        InputData {
-            seeds: vec![79, 14, 55, 13],
-            table: Table {
-                seed_to_soil: Lookup(vec![
-                    Mapper {
-                        length: 2,
-                        source: 98,
-                        destination: 50
-                    },
-                    Mapper {
-                        length: 48,
-                        source: 50,
-                        destination: 52
-                    }
-                ]),
-                soil_to_fertilizer: Lookup(vec![
-                    Mapper {
-                        length: 37,
-                        source: 15,
-                        destination: 0
-                    },
-                    Mapper {
-                        length: 2,
-                        source: 52,
-                        destination: 37
-                    },
-                    Mapper {
-                        length: 15,
-                        source: 0,
-                        destination: 39
-                    }
-                ]),
-                fertilizer_to_water: Lookup(vec![
-                    Mapper {
-                        length: 8,
-                        source: 53,
-                        destination: 49
-                    },
-                    Mapper {
-                        length: 42,
-                        source: 11,
-                        destination: 0
-                    },
-                    Mapper {
-                        length: 7,
-                        source: 0,
-                        destination: 42
-                    },
-                    Mapper {
-                        length: 4,
-                        source: 7,
-                        destination: 57
-                    }
-                ]),
-                water_to_light: Lookup(vec![
-                    Mapper {
-                        length: 7,
-                        source: 18,
-                        destination: 88
-                    },
-                    Mapper {
-                        length: 70,
-                        source: 25,
-                        destination: 18
-                    }
-                ]),
-                light_to_temperature: Lookup(vec![
-                    Mapper {
-                        length: 23,
-                        source: 77,
-                        destination: 45
-                    },
-                    Mapper {
-                        length: 19,
-                        source: 45,
-                        destination: 81
-                    },
-                    Mapper {
-                        length: 13,
-                        source: 64,
-                        destination: 68
-                    }
-                ]),
-                temperature_to_humidity: Lookup(vec![
-                    Mapper {
-                        length: 1,
-                        source: 69,
-                        destination: 0
-                    },
-                    Mapper {
-                        length: 69,
-                        source: 0,
-                        destination: 1
-                    }
-                ]),
-                humidity_to_location: Lookup(vec![
-                    Mapper {
-                        length: 37,
-                        source: 56,
-                        destination: 60
-                    },
-                    Mapper {
-                        length: 4,
-                        source: 93,
-                        destination: 56
-                    }
-                ])
+
+    #[test]
+    fn test_parser() {
+        assert_parser!(
+            parse,
+            INPUT,
+            InputData {
+                seeds: vec![79, 14, 55, 13],
+                table: Table {
+                    seed_to_soil: Lookup(vec![
+                        Mapper {
+                            length: 2,
+                            source: 98,
+                            destination: 50
+                        },
+                        Mapper {
+                            length: 48,
+                            source: 50,
+                            destination: 52
+                        }
+                    ]),
+                    soil_to_fertilizer: Lookup(vec![
+                        Mapper {
+                            length: 37,
+                            source: 15,
+                            destination: 0
+                        },
+                        Mapper {
+                            length: 2,
+                            source: 52,
+                            destination: 37
+                        },
+                        Mapper {
+                            length: 15,
+                            source: 0,
+                            destination: 39
+                        }
+                    ]),
+                    fertilizer_to_water: Lookup(vec![
+                        Mapper {
+                            length: 8,
+                            source: 53,
+                            destination: 49
+                        },
+                        Mapper {
+                            length: 42,
+                            source: 11,
+                            destination: 0
+                        },
+                        Mapper {
+                            length: 7,
+                            source: 0,
+                            destination: 42
+                        },
+                        Mapper {
+                            length: 4,
+                            source: 7,
+                            destination: 57
+                        }
+                    ]),
+                    water_to_light: Lookup(vec![
+                        Mapper {
+                            length: 7,
+                            source: 18,
+                            destination: 88
+                        },
+                        Mapper {
+                            length: 70,
+                            source: 25,
+                            destination: 18
+                        }
+                    ]),
+                    light_to_temperature: Lookup(vec![
+                        Mapper {
+                            length: 23,
+                            source: 77,
+                            destination: 45
+                        },
+                        Mapper {
+                            length: 19,
+                            source: 45,
+                            destination: 81
+                        },
+                        Mapper {
+                            length: 13,
+                            source: 64,
+                            destination: 68
+                        }
+                    ]),
+                    temperature_to_humidity: Lookup(vec![
+                        Mapper {
+                            length: 1,
+                            source: 69,
+                            destination: 0
+                        },
+                        Mapper {
+                            length: 69,
+                            source: 0,
+                            destination: 1
+                        }
+                    ]),
+                    humidity_to_location: Lookup(vec![
+                        Mapper {
+                            length: 37,
+                            source: 56,
+                            destination: 60
+                        },
+                        Mapper {
+                            length: 4,
+                            source: 93,
+                            destination: 56
+                        }
+                    ])
+                }
             }
-        }
-    );
-    assert_part!(parse, part1, input, 35);
-    assert_part!(parse, part2, input, 46);
+        );
+    }
+
+    #[test]
+    fn test_part1() {
+        assert_part!(parse, part1, INPUT, 35);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_part!(parse, part2, INPUT, 46);
+    }
 }

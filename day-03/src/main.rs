@@ -35,7 +35,7 @@ impl<'a> Iterator for PartNumberIterator<'a> {
     type Item = (Position, u64);
 
     fn next(&mut self) -> Option<Self::Item> {
-        for ((row_0, col_0), item) in self.indexed_iter.by_ref() {
+        for ((row_0, col_0), &item) in self.indexed_iter.by_ref() {
             if let Some((pos, total)) = self.part_number {
                 let Position {
                     row, column_start, ..
@@ -47,7 +47,7 @@ impl<'a> Iterator for PartNumberIterator<'a> {
                             column_start,
                             column_end: col_0,
                         };
-                        self.part_number = Some((pos_1, (total * 10) + ascii_to_u64(*item)));
+                        self.part_number = Some((pos_1, (total * 10) + ascii_to_u64(item)));
                     }
                     (false, true) => {
                         let pos_1 = Position {
@@ -55,7 +55,7 @@ impl<'a> Iterator for PartNumberIterator<'a> {
                             column_start: col_0,
                             column_end: col_0,
                         };
-                        self.part_number = Some((pos_1, ascii_to_u64(*item)));
+                        self.part_number = Some((pos_1, ascii_to_u64(item)));
                         return Some((pos, total));
                     }
                     (true | false, false) => {
@@ -69,7 +69,7 @@ impl<'a> Iterator for PartNumberIterator<'a> {
                     column_start: col_0,
                     column_end: col_0,
                 };
-                self.part_number = Some((pos_1, ascii_to_u64(*item)));
+                self.part_number = Some((pos_1, ascii_to_u64(item)));
             }
         }
         let temp = self.part_number;
@@ -84,10 +84,11 @@ struct InputData(Array2<u8>);
 #[allow(clippy::unnecessary_wraps)]
 fn parse(input: &str) -> ParseResult<InputData> {
     let data: Vec<Vec<u8>> = input
+        .trim()
         .split('\n')
         .map(|line| line.bytes().collect())
         .collect();
-    let mut arr = Array2::<u8>::default((data.len() - 1, data[0].len()));
+    let mut arr = Array2::<u8>::default((data.len(), data[0].len()));
     for (i, mut row) in arr.axis_iter_mut(Axis(0)).enumerate() {
         for (j, col) in row.iter_mut().enumerate() {
             *col = data[i][j];
@@ -105,15 +106,15 @@ fn next_to_symbol(arr: ArrayView2<u8>, pos: Position) -> bool {
 
     (start_row..=end_row)
         .cartesian_product(start_col..=end_col)
-        .filter(|(r, c)| !(*r == pos.row && (pos.column_start..=pos.column_end).contains(c)))
+        .filter(|&(r, c)| !(r == pos.row && (pos.column_start..=pos.column_end).contains(&c)))
         .filter_map(|(r, c)| arr.get((r, c)))
-        .any(|c| *c != b'.')
+        .any(|&c| c != b'.')
 }
 
 #[allow(clippy::unnecessary_wraps)]
 fn part1(input: &InputData) -> AocResult<u64> {
     Ok(PartNumberIterator::new(&input.0)
-        .filter(|(pos, _)| next_to_symbol(input.0.view(), *pos))
+        .filter(|&(pos, _)| next_to_symbol(input.0.view(), pos))
         .map(|(_, num)| num)
         .sum())
 }
@@ -124,7 +125,7 @@ fn part2(input: &InputData) -> AocResult<u64> {
     Ok(input
         .0
         .indexed_iter()
-        .filter(|(_, item)| **item == b'*')
+        .filter(|&(_, &item)| item == b'*')
         .map(|(pos, _)| pos)
         .filter_map(|(r, c)| {
             let start_row = r.saturating_sub(1);
@@ -165,9 +166,11 @@ fn part2(input: &InputData) -> AocResult<u64> {
 
 aoc_main!(parse, part1, part2);
 
-#[test]
-fn test() {
-    let input = "467..114..
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const INPUT: &str = "467..114..
 ...*......
 ..35..633.
 ......#...
@@ -178,22 +181,34 @@ fn test() {
 ...$.*....
 .664.598..
 ";
-    assert_parser!(
-        parse,
-        input,
-        InputData(array![
-            [52, 54, 55, 46, 46, 49, 49, 52, 46, 46],
-            [46, 46, 46, 42, 46, 46, 46, 46, 46, 46],
-            [46, 46, 51, 53, 46, 46, 54, 51, 51, 46],
-            [46, 46, 46, 46, 46, 46, 35, 46, 46, 46],
-            [54, 49, 55, 42, 46, 46, 46, 46, 46, 46],
-            [46, 46, 46, 46, 46, 43, 46, 53, 56, 46],
-            [46, 46, 53, 57, 50, 46, 46, 46, 46, 46],
-            [46, 46, 46, 46, 46, 46, 55, 53, 53, 46],
-            [46, 46, 46, 36, 46, 42, 46, 46, 46, 46],
-            [46, 54, 54, 52, 46, 53, 57, 56, 46, 46]
-        ])
-    );
-    assert_part!(parse, part1, input, 4361);
-    assert_part!(parse, part2, input, 467835);
+
+    #[test]
+    fn test_parser() {
+        assert_parser!(
+            parse,
+            INPUT,
+            InputData(array![
+                [52, 54, 55, 46, 46, 49, 49, 52, 46, 46],
+                [46, 46, 46, 42, 46, 46, 46, 46, 46, 46],
+                [46, 46, 51, 53, 46, 46, 54, 51, 51, 46],
+                [46, 46, 46, 46, 46, 46, 35, 46, 46, 46],
+                [54, 49, 55, 42, 46, 46, 46, 46, 46, 46],
+                [46, 46, 46, 46, 46, 43, 46, 53, 56, 46],
+                [46, 46, 53, 57, 50, 46, 46, 46, 46, 46],
+                [46, 46, 46, 46, 46, 46, 55, 53, 53, 46],
+                [46, 46, 46, 36, 46, 42, 46, 46, 46, 46],
+                [46, 54, 54, 52, 46, 53, 57, 56, 46, 46]
+            ])
+        );
+    }
+
+    #[test]
+    fn test_part1() {
+        assert_part!(parse, part1, INPUT, 4361);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_part!(parse, part2, INPUT, 467835);
+    }
 }

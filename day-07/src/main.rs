@@ -61,13 +61,13 @@ enum HandType {
 impl HandType {
     fn by_stats(HandStats { variants, max }: HandStats) -> Self {
         match (variants, max) {
-            (1, 5) => HandType::FiveOfAKind,
-            (2, 4) => HandType::FourOfAKind,
-            (2, 3) => HandType::FullHouse,
-            (3, 3) => HandType::ThreeOfAKind,
-            (3, 2) => HandType::TwoPair,
-            (4, 2) => HandType::OnePair,
-            (5, 1) => HandType::HighCard,
+            (1, 5) => Self::FiveOfAKind,
+            (2, 4) => Self::FourOfAKind,
+            (2, 3) => Self::FullHouse,
+            (3, 3) => Self::ThreeOfAKind,
+            (3, 2) => Self::TwoPair,
+            (4, 2) => Self::OnePair,
+            (5, 1) => Self::HighCard,
             _ => unreachable!("Impossible hand"),
         }
     }
@@ -83,7 +83,7 @@ impl From<HandStats> for HandType {
 struct Hand([Card; 5]);
 
 impl Hand {
-    fn stats(&self) -> HandStats {
+    fn stats(self) -> HandStats {
         let variant_counter = self.0.iter().counts();
         let max = variant_counter.values().max().copied().unwrap();
         HandStats {
@@ -97,7 +97,7 @@ impl Hand {
 struct JokerHand(Hand);
 
 impl JokerHand {
-    fn stats(&self) -> HandStats {
+    fn stats(self) -> HandStats {
         let mut variant_counter = self.0 .0.iter().counts();
         let mut max = 0;
         if let Some(joker_count) = variant_counter.remove(&Card::Jack) {
@@ -106,9 +106,8 @@ impl JokerHand {
                     max: 5,
                     variants: 1,
                 };
-            } else {
-                max += joker_count
             }
+            max += joker_count;
         }
         max += variant_counter.values().max().copied().unwrap();
         HandStats {
@@ -246,39 +245,53 @@ fn part2(InputData(rounds): &InputData) -> AocResult<u64> {
 
 aoc_main!(parse, part1, part2);
 
-#[test]
-fn test() {
-    let input = "32T3K 765
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const INPUT: &str = "32T3K 765
 T55J5 684
 KK677 28
 KTJJT 220
 QQQJA 483";
-    assert_parser!(
-        parse,
-        input,
-        InputData(vec![
-            (
-                Hand([Card::Three, Card::Two, Card::Ten, Card::Three, Card::King]),
-                765
-            ),
-            (
-                Hand([Card::Ten, Card::Five, Card::Five, Card::Jack, Card::Five]),
-                684
-            ),
-            (
-                Hand([Card::King, Card::King, Card::Six, Card::Seven, Card::Seven]),
-                28
-            ),
-            (
-                Hand([Card::King, Card::Ten, Card::Jack, Card::Jack, Card::Ten]),
-                220
-            ),
-            (
-                Hand([Card::Queen, Card::Queen, Card::Queen, Card::Jack, Card::Ace]),
-                483
-            )
-        ])
-    );
-    assert_part!(parse, part1, input, 6440);
-    assert_part!(parse, part2, input, 5905);
+
+    #[test]
+    fn test_parser() {
+        assert_parser!(
+            parse,
+            INPUT,
+            InputData(vec![
+                (
+                    Hand([Card::Three, Card::Two, Card::Ten, Card::Three, Card::King]),
+                    765
+                ),
+                (
+                    Hand([Card::Ten, Card::Five, Card::Five, Card::Jack, Card::Five]),
+                    684
+                ),
+                (
+                    Hand([Card::King, Card::King, Card::Six, Card::Seven, Card::Seven]),
+                    28
+                ),
+                (
+                    Hand([Card::King, Card::Ten, Card::Jack, Card::Jack, Card::Ten]),
+                    220
+                ),
+                (
+                    Hand([Card::Queen, Card::Queen, Card::Queen, Card::Jack, Card::Ace]),
+                    483
+                )
+            ])
+        );
+    }
+
+    #[test]
+    fn test_part1() {
+        assert_part!(parse, part1, INPUT, 6440);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_part!(parse, part2, INPUT, 5905);
+    }
 }
