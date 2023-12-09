@@ -97,7 +97,7 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        // assert_part!(parse, part2, INPUT, ()));
+        // assert_part!(parse, part2, INPUT, ());
     }
 }
 "# }
