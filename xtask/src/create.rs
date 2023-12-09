@@ -55,7 +55,7 @@ utils = {{ path = "../utils", version = "*" }}
     if let Ok(mut file) = create_new(location.join("src").join("main.rs")) {
         println!("Creating main.rs");
         file.write_all(
-            indoc! { r"
+            indoc! { r#"
 use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
 use utils::*;
@@ -79,10 +79,28 @@ fn part2(input: &InputData) -> AocResult<()> {
 
 aoc_main!(parse, part1, part2);
 
-#[test]
-fn test() {}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-" }
+    const INPUT: &str = "";
+
+    #[test]
+    fn test_parser() {
+        assert_parser!(parse, INPUT, InputData {});
+    }
+
+    #[test]
+    fn test_part1() {
+        // assert_part!(parse, part1, INPUT, ());
+    }
+
+    #[test]
+    fn test_part2() {
+        // assert_part!(parse, part2, INPUT, ()));
+    }
+}
+"# }
             .as_bytes(),
         )?;
     } else {
