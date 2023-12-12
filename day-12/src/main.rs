@@ -9,7 +9,7 @@ enum Condition {
     Unknown,
 }
 
-#[cached(size = 100)]
+#[cached]
 fn solutions_rec(report: Report, cond_index: usize, check_index: usize, block_size: u64) -> usize {
     if cond_index == report.conditions.len() {
         if report.finished_checks(check_index, block_size) {
