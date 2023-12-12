@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
 use utils::*;
 

@@ -17,15 +17,15 @@ enum Pipe {
 }
 
 impl Pipe {
-    fn valid_from_direction(&self, direction: Direction) -> bool {
+    const fn valid_from_direction(self, direction: Direction) -> bool {
         matches!(
             (self, direction),
-            (Pipe::Vertical, Direction::North | Direction::South)
-                | (Pipe::Horizontal, Direction::East | Direction::West)
-                | (Pipe::NorthToEast, Direction::South | Direction::West)
-                | (Pipe::NorthToWest, Direction::South | Direction::East)
-                | (Pipe::SouthToWest, Direction::North | Direction::East)
-                | (Pipe::SouthToEast, Direction::North | Direction::West)
+            (Self::Vertical, Direction::North | Direction::South)
+                | (Self::Horizontal, Direction::East | Direction::West)
+                | (Self::NorthToEast, Direction::South | Direction::West)
+                | (Self::NorthToWest, Direction::South | Direction::East)
+                | (Self::SouthToWest, Direction::North | Direction::East)
+                | (Self::SouthToEast, Direction::North | Direction::West)
         )
     }
 }
@@ -98,14 +98,14 @@ impl<'a> Iterator for PipeIterator<'a> {
         let current_direction = self.direction;
         let (row, col) = self.position;
 
+        #[allow(clippy::match_same_arms)]
         match (current_pipe, current_direction) {
             (Pipe::None, _) => unreachable!("Cannot move off Pipe::None"),
             (Pipe::Start, _) => {
                 if self.finished {
                     return None;
-                } else {
-                    self.finished = true;
                 }
+                self.finished = true;
             }
 
             (Pipe::Vertical, Direction::North) => self.position = (row.saturating_sub(1), col),
@@ -217,6 +217,7 @@ impl InputData {
     }
 }
 
+#[allow(clippy::unnecessary_wraps)]
 fn parse(input: &str) -> ParseResult<InputData> {
     let data: Vec<Vec<Pipe>> = input
         .trim()
@@ -255,7 +256,7 @@ fn part1(input: &InputData) -> AocResult<usize> {
         .flatten()
     {
         for (i, (pos, _, _)) in pipe_iter.enumerate() {
-            distance[pos] = distance[pos].min(i)
+            distance[pos] = distance[pos].min(i);
         }
     }
     distance[input.start()] = 0;
@@ -268,7 +269,8 @@ fn part1(input: &InputData) -> AocResult<usize> {
         + 1)
 }
 
-fn pipe_dir_to_flag(pipe: Pipe, direction: Direction) -> Option<Flag> {
+const fn pipe_dir_to_flag(pipe: Pipe, direction: Direction) -> Option<Flag> {
+    #[allow(clippy::unnested_or_patterns)]
     match (pipe, direction) {
         (Pipe::Vertical, Direction::North)
         | (Pipe::SouthToEast, Direction::North)
