@@ -27,13 +27,17 @@ fn parse(input: &str) -> ParseResult<InputData> {
         character::complete::{line_ending, space1, u8},
         combinator::map,
         multi::separated_list1,
-        sequence::{delimited, pair, separated_pair},
+        sequence::{delimited, pair, separated_pair, tuple},
     };
 
     let card_id = delimited(pair(tag("Card"), space1), u8, pair(tag(":"), space1));
     let winning_numbers = map(separated_list1(space1, u8), |v| v.into_iter().collect());
     let card_numbers = map(separated_list1(space1, u8), |v| v.into_iter().collect());
-    let numbers = separated_pair(winning_numbers, tag(" | "), card_numbers);
+    let numbers = separated_pair(
+        winning_numbers,
+        tuple((space1, tag("|"), space1)),
+        card_numbers,
+    );
     let card = map(pair(card_id, numbers), |(id, (winning, numbers))| Card {
         id,
         numbers,
