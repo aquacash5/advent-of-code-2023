@@ -47,12 +47,12 @@ struct Offsets {
 }
 
 impl Offsets {
-    fn new(size: usize, rows: &[usize], cols: &[usize]) -> Self {
+    fn new(scale: usize, rows: &[usize], cols: &[usize]) -> Self {
         Self {
             row: (0..=rows.len())
                 .scan(0, |acc, cur| {
                     if !rows.contains(&cur) {
-                        *acc += size;
+                        *acc += scale - 1;
                     }
                     Some(*acc)
                 })
@@ -60,7 +60,7 @@ impl Offsets {
             col: (0..=cols.len())
                 .scan(0, |acc, cur| {
                     if !cols.contains(&cur) {
-                        *acc += size;
+                        *acc += scale - 1;
                     }
                     Some(*acc)
                 })
@@ -83,7 +83,7 @@ fn part1(input: &InputData) -> AocResult<usize> {
         .collect();
     let rows: Vec<usize> = galaxies.iter().map(|&(row, _)| row).collect();
     let cols: Vec<usize> = galaxies.iter().map(|&(_, col)| col).collect();
-    let offsets: Offsets = Offsets::new(1, &rows, &cols);
+    let offsets: Offsets = Offsets::new(2, &rows, &cols);
     Ok(galaxies
         .iter()
         .map(|&pos| offsets.resize(pos))
@@ -103,7 +103,7 @@ fn part2(input: &InputData) -> AocResult<usize> {
         .collect();
     let rows: Vec<usize> = galaxies.iter().map(|&(row, _)| row).collect();
     let cols: Vec<usize> = galaxies.iter().map(|&(_, col)| col).collect();
-    let offsets: Offsets = Offsets::new(999_999, &rows, &cols);
+    let offsets: Offsets = Offsets::new(1_000_000, &rows, &cols);
     Ok(galaxies
         .iter()
         .map(|&pos| offsets.resize(pos))
@@ -159,6 +159,6 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_part!(parse, part2, INPUT, 82000292);
+        assert_part!(parse, part2, INPUT, 82000210);
     }
 }
